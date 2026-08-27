@@ -136,7 +136,7 @@ export function showScreen(name) {
 // ─── 정원 화면 ───────────────────────────────────────────────
 
 function renderGardenScreen() {
-  const container = document.getElementById('garden-svg-container');
+  const container = document.getElementById('garden-3d-container') || document.getElementById('garden-svg-container');
   if (!container) return;
 
   if (placingItem) {

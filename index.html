@@ -11,6 +11,9 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Three.js 3D 엔진 & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 
@@ -33,22 +36,11 @@
     <!-- ── [1] 정원 ──────────────────────────────── -->
     <section id="screen-garden" class="screen screen--active" aria-label="나의 정원">
 
-      <!-- 하늘 + 정원 뷰포트 -->
+      <!-- 하늘 + 3D 동물의 숲 디오라마 뷰포트 -->
       <div id="garden-viewport">
-        <!-- 구름 애니메이션 -->
-        <div class="cloud cloud-1"></div>
-        <div class="cloud cloud-2"></div>
-        <div class="cloud cloud-3"></div>
-
-        <!-- 벚꽃 떨어지는 꽃잎 -->
-        <div class="petal" style="left:10%;animation-duration:8s;animation-delay:0s;">🌸</div>
-        <div class="petal" style="left:30%;animation-duration:11s;animation-delay:2s;">🌺</div>
-        <div class="petal" style="left:55%;animation-duration:9s;animation-delay:4s;">🌸</div>
-        <div class="petal" style="left:75%;animation-duration:13s;animation-delay:1s;">🌼</div>
-        <div class="petal" style="left:90%;animation-duration:10s;animation-delay:6s;">🌸</div>
-
-        <!-- SVG 정원 (garden.js가 동적 생성) -->
-        <div id="garden-svg-container" role="img" aria-label="정원 보기"></div>
+        <!-- 3D WebGL 정원 캔버스 컨테이너 -->
+        <div id="garden-3d-container" role="img" aria-label="3D 동물의 숲 디오라마 정원"></div>
+        <div class="garden-3d-hint">👆 터치/드래그하여 360° 정원을 둘러보세요!</div>
       </div>
 
       <!-- 정원 정보 바 -->
