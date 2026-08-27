@@ -11,6 +11,7 @@ import {
 import { initMiniGame, destroyMiniGame, getGradeRewards } from './mini-game.js';
 import { renderGarden, renderShop, getItemById, GARDEN_ITEMS } from './garden.js';
 import { UNIQUE_KANJI } from './kanji-data.js';
+import { sound } from './sound.js';
 
 // ─── 앱 상태 ─────────────────────────────────────────────────
 
@@ -58,6 +59,31 @@ function setupGlobalEvents() {
     placingItem = null;
     renderGardenScreen();
   });
+
+  // 사운드 토글 버튼
+  const soundBtn = document.getElementById('hud-sound');
+  if (soundBtn) {
+    soundBtn.textContent = sound.getMuted() ? '🔇' : '🔊';
+    soundBtn.addEventListener('click', () => {
+      const muted = sound.toggleMute();
+      soundBtn.textContent = muted ? '🔇' : '🔊';
+      if (!muted) {
+        sound.startBGM();
+      }
+    });
+  }
+
+  // 첫 사용자 인터랙션 시 오디오 컨텍스트 활성화 및 BGM 시작
+  const startAudioOnFirstInteraction = () => {
+    sound.initContext();
+    if (!sound.getMuted()) {
+      sound.startBGM();
+    }
+    window.removeEventListener('click', startAudioOnFirstInteraction);
+    window.removeEventListener('touchstart', startAudioOnFirstInteraction);
+  };
+  window.addEventListener('click', startAudioOnFirstInteraction, { once: true });
+  window.addEventListener('touchstart', startAudioOnFirstInteraction, { once: true });
 }
 
 // ─── HUD 업데이트 ────────────────────────────────────────────

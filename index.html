@@ -24,6 +24,7 @@
     <span id="hud-book"   class="hud-chip hud-chip--book"   aria-label="학습 진도">📖 0/95</span>
     <span id="hud-level"  class="hud-chip hud-chip--level"  aria-label="레벨">⭐ Lv.1</span>
     <span id="hud-streak" class="hud-chip hud-chip--streak" aria-label="연속 학습" style="display:none"></span>
+    <button id="hud-sound" class="hud-chip hud-chip--btn" aria-label="사운드 켜기/끄기">🔊</button>
   </header>
 
   <!-- ══ 화면 ════════════════════════════════════════ -->
@@ -82,10 +83,10 @@
     </section>
 
     <!-- ── [2] 미니게임 ──────────────────────────── -->
-    <section id="screen-minigame" class="screen" aria-label="과일 연결 게임">
+    <section id="screen-minigame" class="screen" aria-label="과일 매치 게임">
 
       <div class="mg-header">
-        <h1 class="mg-title">🍎 과일 연결</h1>
+        <h1 class="mg-title">🍎 과일 매치-3</h1>
         <div class="timer-wrap">
           <div id="minigame-timer" aria-live="polite">30</div>
           <div class="timer-track">
@@ -95,14 +96,14 @@
       </div>
 
       <div class="mg-hint">
-        같은 과일 3개 이상 연결 👆 드래그 또는 탭하세요!
+        과일을 스왑하여 3개 맞추기! 💣4개: 폭탄, 🌟5개: 슈퍼스타
       </div>
 
-      <!-- 5×5 격자 -->
+      <!-- 6×6 격자 -->
       <div id="minigame-grid" role="grid" aria-label="과일 격자"></div>
 
       <div class="mg-score">
-        🍇 연결: <strong id="minigame-score-text">0번</strong>
+        ✨ 점수: <strong id="minigame-score-text">0점</strong>
       </div>
 
     </section>
