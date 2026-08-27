@@ -1,8 +1,11 @@
-// mini-game.js — 3×3 스와이프 & 탭 연결 과일 게임
+// mini-game.js — 5×5 스와이프 & 탭 연결 과일 게임 (꿈의 정원 스타일)
 
-const ALL_FRUITS = ['🍎', '🍊', '🍇', '🍓', '🍑', '🍋'];
-// 한 판에 3종류의 과일만 사용 -> 9칸 그리드에서 3매칭 보장
-let activeFruits = ['🍎', '🍊', '🍇'];
+export const GRID_SIZE = 5; // 5x5 그리드 (25칸)
+const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
+
+const ALL_FRUITS = ['🍎', '🍊', '🍇', '🍓', '🍋', '🍑'];
+// 5x5 판에서 4종류의 과일을 균형 있게 사용하여 다채로운 매칭 제공
+let activeFruits = ['🍎', '🍊', '🍇', '🍓'];
 
 let grid = [];
 let selectedCells = [];   // 현재 선택/드래그 중인 셀 인덱스 배열
@@ -25,9 +28,9 @@ export function initMiniGame(container, endCallback) {
   isPointerDown = false;
   pointerMoved = false;
 
-  // 매 판마다 6개 중 3개의 과일을 랜덤 선택
+  // 매 판 6가지 과일 중 4가지를 무작위 선택
   const shuffled = [...ALL_FRUITS].sort(() => Math.random() - 0.5);
-  activeFruits = shuffled.slice(0, 3);
+  activeFruits = shuffled.slice(0, 4);
 
   grid = generateValidGrid();
   render(container);
@@ -42,18 +45,15 @@ export function destroyMiniGame() {
   selectedCells = [];
 }
 
-// ─── 그리드 생성 (최소 1개 이상의 3매칭 보장) ───────────────────
+// ─── 그리드 생성 ─────────────────────────────────────────────
 
 function generateValidGrid() {
   let attempts = 0;
   while (attempts < 50) {
     const candidate = [];
-    // 3종류 과일을 각 3개씩 균등 배분하여 9칸 생성
-    activeFruits.forEach(f => {
-      candidate.push(f, f, f);
-    });
-    // 섞기
-    candidate.sort(() => Math.random() - 0.5);
+    for (let i = 0; i < TOTAL_CELLS; i++) {
+      candidate.push(activeFruits[Math.floor(Math.random() * activeFruits.length)]);
+    }
 
     if (hasAnyValidMatch(candidate)) {
       return candidate;
@@ -61,18 +61,17 @@ function generateValidGrid() {
     attempts++;
   }
 
-  // fallback: 첫 번째 행에 같은 과일 3개 배치 보장
-  const fb = [
-    activeFruits[0], activeFruits[0], activeFruits[0],
-    activeFruits[1], activeFruits[1], activeFruits[1],
-    activeFruits[2], activeFruits[2], activeFruits[2]
-  ];
-  return fb;
+  // fallback: 무조건 생성
+  const candidate = [];
+  for (let i = 0; i < TOTAL_CELLS; i++) {
+    candidate.push(activeFruits[i % activeFruits.length]);
+  }
+  return candidate.sort(() => Math.random() - 0.5);
 }
 
-// 인접한 3매칭이 존재하는지 검사 (8방향 인접 DFS)
+// 인접 3매칭 탐색 (8방향 인접 DFS)
 function hasAnyValidMatch(board) {
-  for (let i = 0; i < 9; i++) {
+  for (let i = 0; i < TOTAL_CELLS; i++) {
     const fruit = board[i];
     if (!fruit) continue;
     if (findMatchFrom(board, i, fruit, [i])) {
@@ -96,16 +95,16 @@ function findMatchFrom(board, currentIdx, fruit, path) {
 }
 
 function getAdjacentIndices(idx) {
-  const r = Math.floor(idx / 3);
-  const c = idx % 3;
+  const r = Math.floor(idx / GRID_SIZE);
+  const c = idx % GRID_SIZE;
   const list = [];
   for (let dr = -1; dr <= 1; dr++) {
     for (let dc = -1; dc <= 1; dc++) {
       if (dr === 0 && dc === 0) continue;
       const nr = r + dr;
       const nc = c + dc;
-      if (nr >= 0 && nr < 3 && nc >= 0 && nc < 3) {
-        list.push(nr * 3 + nc);
+      if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE) {
+        list.push(nr * GRID_SIZE + nc);
       }
     }
   }
@@ -176,12 +175,10 @@ function onPointerDown(e, gameEl) {
   isPointerDown = true;
   pointerMoved = false;
 
-  // 이미 선택된 셀 목록이 있고 탭 모드로 이어가는 경우
   if (selectedCells.length > 0) {
     const last = selectedCells[selectedCells.length - 1];
     const firstFruit = grid[selectedCells[0]];
 
-    // 이미 선택한 셀을 다시 탭하면 선택 취소
     if (selectedCells.includes(idx)) {
       if (idx === last && selectedCells.length > 1) {
         selectedCells.pop();
@@ -189,20 +186,13 @@ function onPointerDown(e, gameEl) {
         return;
       }
     } else if (isAdjacent(last, idx) && grid[idx] === firstFruit) {
-      // 인접한 같은 과일 탭 -> 추가
       selectedCells.push(idx);
       updateSelectionVisual(gameEl);
       if (navigator.vibrate) navigator.vibrate(15);
-
-      // 3개 완성 시 자동 매칭
-      if (selectedCells.length >= MIN_MATCH) {
-        finishMatch(gameEl);
-      }
       return;
     }
   }
 
-  // 새로운 시작
   selectedCells = [idx];
   updateSelectionVisual(gameEl);
   if (navigator.vibrate) navigator.vibrate(10);
@@ -216,7 +206,6 @@ function onPointerMove(e, gameEl) {
   pointerMoved = true;
 
   if (selectedCells.includes(idx)) {
-    // 이전 셀로 되돌아가는 제스처 지원
     if (selectedCells.length >= 2 && idx === selectedCells[selectedCells.length - 2]) {
       selectedCells.pop();
       updateSelectionVisual(gameEl);
@@ -224,7 +213,6 @@ function onPointerMove(e, gameEl) {
     return;
   }
 
-  // 인접 여부 및 동일 과일 여부 검사
   const last = selectedCells[selectedCells.length - 1];
   if (last !== undefined && !isAdjacent(last, idx)) return;
 
@@ -233,29 +221,22 @@ function onPointerMove(e, gameEl) {
 
   selectedCells.push(idx);
   updateSelectionVisual(gameEl);
-  if (navigator.vibrate) navigator.vibrate(20);
+  if (navigator.vibrate) navigator.vibrate(18);
 }
 
 function onPointerUp(e, gameEl) {
   if (!isPointerDown) return;
   isPointerDown = false;
 
-  if (pointerMoved) {
-    // 드래그 제스처로 3개 이상 연결했으면 매칭 처리
-    if (selectedCells.length >= MIN_MATCH) {
-      finishMatch(gameEl);
-    } else {
-      // 드래그했지만 미완성인 경우 흔들기 후 초기화
+  if (selectedCells.length >= MIN_MATCH) {
+    finishMatch(gameEl);
+  } else {
+    if (pointerMoved) {
       if (selectedCells.length > 1) {
         showMatchEffect(gameEl, selectedCells, false);
       }
       setTimeout(() => clearSelection(gameEl), 250);
       selectedCells = [];
-    }
-  } else {
-    // 단순 탭인 경우: 3개 완성되었으면 매칭, 아니면 선택 상태 유지(다음 탭 기다림)
-    if (selectedCells.length >= MIN_MATCH) {
-      finishMatch(gameEl);
     }
   }
 }
@@ -267,11 +248,9 @@ function finishMatch(gameEl) {
   const matched = [...selectedCells];
   selectedCells = [];
 
-  // 매칭 성공 효과
   showMatchEffect(gameEl, matched, true);
-  if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+  if (navigator.vibrate) navigator.vibrate([30, 40, 50]);
 
-  // 그리드에서 제거
   matched.forEach(idx => { grid[idx] = null; });
 
   setTimeout(() => {
@@ -287,8 +266,8 @@ function finishMatch(gameEl) {
 }
 
 function isAdjacent(a, b) {
-  const ax = a % 3, ay = Math.floor(a / 3);
-  const bx = b % 3, by = Math.floor(b / 3);
+  const ax = a % GRID_SIZE, ay = Math.floor(a / GRID_SIZE);
+  const bx = b % GRID_SIZE, by = Math.floor(b / GRID_SIZE);
   return Math.abs(ax - bx) <= 1 && Math.abs(ay - by) <= 1;
 }
 
@@ -321,13 +300,12 @@ function clearSelection(gameEl) {
 // ─── 그리드 보충 ─────────────────────────────────────────────
 
 function refillGrid() {
-  for (let i = 0; i < 9; i++) {
+  for (let i = 0; i < TOTAL_CELLS; i++) {
     if (grid[i] === null) {
       grid[i] = activeFruits[Math.floor(Math.random() * activeFruits.length)];
     }
   }
 
-  // 만약 보충 후 매칭이 아예 없는 교착상태면 유효한 그리드로 재생성
   if (!hasAnyValidMatch(grid)) {
     grid = generateValidGrid();
   }
@@ -336,7 +314,7 @@ function refillGrid() {
 // ─── 승리 체크 ───────────────────────────────────────────────
 
 function checkWin() {
-  // 3번 이상 매칭 시 성공으로 바로 한자 퀴즈 전환 가능 (빠른 템포)
+  // 3번 이상 매칭 시 성공으로 바로 한자 퀴즈 전환 가능
   if (score >= 3) {
     endGame('excellent');
   }
@@ -356,7 +334,7 @@ function startTimer(container) {
 
     if (timeLeft <= 0) {
       clearInterval(timerInterval);
-      endGame(score >= 2 ? 'excellent' : score >= 1 ? 'good' : 'normal');
+      endGame(score >= 3 ? 'excellent' : score >= 1 ? 'good' : 'normal');
     }
   }, 1000);
 }
