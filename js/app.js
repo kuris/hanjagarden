@@ -28,7 +28,12 @@ export function initApp() {
   showScreen('garden');
   setupNavigation();
   setupGlobalEvents();
-  renderGardenScreen();
+  
+  // 3D 캔버스 초기 레이아웃 지연 보정
+  requestAnimationFrame(() => {
+    renderGardenScreen();
+    setTimeout(renderGardenScreen, 120);
+  });
 }
 
 function setupNavigation() {

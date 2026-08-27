@@ -2,24 +2,54 @@
 
 const STORAGE_KEY = 'hanjaplace_save';
 
+const DEFAULT_OBJECTS = [
+  { id: 'cottage_1', type: 'cozy_cottage', emoji: '🏡', name: '빨간 지붕 오두막', x: 1, y: 1 },
+  { id: 'windmill_1', type: 'wind_mill', emoji: '🛖', name: '언덕 위 풍차', x: 4, y: 0 },
+  { id: 'fountain_1', type: 'grand_fountain', emoji: '⛲', name: '대리석 물 분수대', x: 2, y: 2 },
+  { id: 'apple_1', type: 'apple_tree', emoji: '🍎', name: '달콤한 사과나무', x: 0, y: 2 },
+  { id: 'peach_1', type: 'peach_tree', emoji: '🍑', name: '향긋한 복숭아나무', x: 5, y: 1 },
+  { id: 'sakura_1', type: 'cherry_blossom', emoji: '🌸', name: '만개한 벚꽃나무', x: 4, y: 4 },
+  { id: 'pine_1', type: 'pine_tree', emoji: '🌲', name: '피톤치드 침엽수', x: 0, y: 0 },
+  { id: 'pond_1', type: 'water_pond', emoji: '🫧', name: '맑은 연못과 연꽃', x: 4, y: 2 },
+  { id: 'duck_1', type: 'duck_statue', emoji: '🦆', name: '귀여운 청둥오리', x: 5, y: 3 },
+  { id: 'picnic_1', type: 'picnic_set', emoji: '🧺', name: '피크닉 세트', x: 2, y: 4 },
+  { id: 'bench_1', type: 'picnic_bench', emoji: '🪑', name: '통나무 벤치', x: 1, y: 4 },
+  { id: 'campfire_1', type: 'campfire', emoji: '🔥', name: '모닥불 세트', x: 3, y: 3 },
+  { id: 'tent_1', type: 'camp_tent', emoji: '⛺', name: '숲속 캠핑 텐트', x: 0, y: 4 },
+  { id: 'tulip_1', type: 'flower_tulip', emoji: '🌷', name: '빨간 튤립 화단', x: 2, y: 1 },
+  { id: 'dandelion_1', type: 'flower_dandelion', emoji: '🌼', name: '노란 민들레 화단', x: 3, y: 1 },
+  { id: 'cosmos_1', type: 'flower_cosmos', emoji: '🌸', name: '분홍 코스모스', x: 3, y: 4 },
+  { id: 'lantern_1', type: 'lantern_post', emoji: '🏮', name: '따뜻한 가든 랜턴', x: 2, y: 0 },
+  { id: 'rainbow_1', type: 'rainbow_arch', emoji: '🌈', name: '무지개 아치 게이트', x: 3, y: 0 },
+];
+
 const DEFAULT_STATE = {
   player: {
-    level: 1,
-    xp: 0,
-    coins: 100,  // 시작 코인 (첫 아이템 구매 가능하도록)
+    level: 5,
+    xp: 450,
+    coins: 9999,  // 모든 아이템 자유롭게 테스트 가능한 넉넉한 코인
     hearts: 5,
-    streak: 0,
+    streak: 3,
     lastPlayedDate: '',
-    totalGamesPlayed: 0,
+    totalGamesPlayed: 10,
   },
-  kanji: {}, // { "水": { mastery: 0, correctCount: 0, wrongCount: 0, learned: false, lastSeen: 0 } }
+  kanji: {},
   garden: {
-    objects: [],   // [{ id, type, emoji, x, y, placed: true }]
-    stage: 1,
-    unlockedAreas: 1,
+    objects: DEFAULT_OBJECTS,   // 풀세트 3D 아이템 배치
+    stage: 5,
+    unlockedAreas: 5,
   },
-  inventory: [], // [{ id, type, emoji, name, count }]
-  recentKanji: [], // 최근 출제된 한자 ID (중복 방지용, 최대 5개)
+  inventory: [
+    { id: 'apple_tree', emoji: '🍎', name: '달콤한 사과나무', count: 3 },
+    { id: 'cherry_blossom', emoji: '🌸', name: '만개한 벚꽃나무', count: 2 },
+    { id: 'grand_fountain', emoji: '⛲', name: '대리석 물 분수대', count: 1 },
+    { id: 'cozy_cottage', emoji: '🏡', name: '빨간 지붕 오두막', count: 1 },
+    { id: 'flower_tulip', emoji: '🌷', name: '빨간 튤립 화단', count: 5 },
+    { id: 'camp_tent', emoji: '⛺', name: '숲속 캠핑 텐트', count: 2 },
+    { id: 'wind_mill', emoji: '🛖', name: '언덕 위 미니 풍차', count: 1 },
+    { id: 'shrine_torii', emoji: '⛩️', name: '신비로운 숲의 사당', count: 1 },
+  ],
+  recentKanji: [],
 };
 
 export function loadState() {
@@ -27,8 +57,15 @@ export function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return JSON.parse(JSON.stringify(DEFAULT_STATE));
     const saved = JSON.parse(raw);
-    // 기본값과 병합 (새 필드 누락 방지)
-    return deepMerge(JSON.parse(JSON.stringify(DEFAULT_STATE)), saved);
+    const merged = deepMerge(JSON.parse(JSON.stringify(DEFAULT_STATE)), saved);
+    
+    // 만약 기존 저장 데이터의 garden.objects가 비어있다면 풍성한 풀세트로 채워줌
+    if (!merged.garden.objects || merged.garden.objects.length === 0) {
+      merged.garden.objects = JSON.parse(JSON.stringify(DEFAULT_OBJECTS));
+      merged.garden.stage = 5;
+      merged.player.coins = Math.max(merged.player.coins, 1000);
+    }
+    return merged;
   } catch (e) {
     console.warn('저장 데이터 로드 실패, 초기화합니다.', e);
     return JSON.parse(JSON.stringify(DEFAULT_STATE));

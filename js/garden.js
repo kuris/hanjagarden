@@ -84,53 +84,53 @@ function initThreeScene(container) {
   isInitialized = true;
   container.innerHTML = '';
 
-  const w = container.clientWidth || 380;
-  const h = container.clientHeight || 360;
+  const w = container.clientWidth || 400;
+  const h = container.clientHeight || 380;
 
   // 1) 씬 설정
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xd9f2fe); // 동숲 하늘색
-  scene.fog = new THREE.FogExp2(0xd9f2fe, 0.022);
+  scene.background = new THREE.Color(0xbfe9fb); // 화사한 동물의 숲 스카이블루
+  scene.fog = new THREE.FogExp2(0xbfe9fb, 0.02);
 
-  // 2) 카메라 (부드러운 디오라마 각도)
-  camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 100);
-  camera.position.set(0, 7.8, 9.8);
+  // 2) 카메라 (가깝고 아기자기한 디오라마 뷰)
+  camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 100);
+  camera.position.set(0, 5.8, 7.6);
 
   // 3) WebGL 렌더러
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
   renderer.setSize(w, h);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.18;
+  renderer.toneMappingExposure = 1.22;
   container.appendChild(renderer.domElement);
 
   // 4) 궤도 조작 컨트롤 (OrbitControls)
   if (window.THREE.OrbitControls) {
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI / 2.18;
-    controls.minDistance = 5.5;
-    controls.maxDistance = 16;
-    controls.target.set(0, 0.4, 0);
+    controls.dampingFactor = 0.06;
+    controls.maxPolarAngle = Math.PI / 2.15;
+    controls.minDistance = 4.5;
+    controls.maxDistance = 14;
+    controls.target.set(0, 0.5, 0);
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.35;
+    controls.autoRotateSpeed = 0.3;
   }
 
   // 5) 조명 시스템
-  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x86efac, 0.9);
+  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x86efac, 0.95);
   scene.add(hemiLight);
 
-  const sunLight = new THREE.DirectionalLight(0xfffaed, 1.25);
-  sunLight.position.set(9, 15, 8);
+  const sunLight = new THREE.DirectionalLight(0xfffaed, 1.35);
+  sunLight.position.set(8, 14, 7);
   sunLight.castShadow = true;
   sunLight.shadow.mapSize.width = 1024;
   sunLight.shadow.mapSize.height = 1024;
   sunLight.shadow.camera.near = 0.5;
   sunLight.shadow.camera.far = 30;
-  const d = 6.5;
+  const d = 6;
   sunLight.shadow.camera.left = -d;
   sunLight.shadow.camera.right = d;
   sunLight.shadow.camera.top = d;
