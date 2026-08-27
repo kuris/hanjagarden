@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#22c55e" />
+  <meta name="description" content="게임 한 판 할 때마다 한자 하나를 배우고, 맞히면 나만의 정원이 자란다. 캐주얼 한자 학습 정원 게임." />
+  <meta property="og:title" content="한자정원 — 游·字·庭" />
+  <meta property="og:description" content="정원을 키우다 보면 한자를 외우게 되는 게임" />
+  <title>한자정원 — 游 · 字 · 庭</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ══ HUD ════════════════════════════════════════ -->
+  <header id="hud" role="banner">
+    <span id="hud-coins"  class="hud-chip hud-chip--coins"  aria-label="코인">🪙 0</span>
+    <span id="hud-hearts" class="hud-chip hud-chip--hearts" aria-label="하트">❤️❤️❤️❤️❤️</span>
+    <span class="hud-spacer"></span>
+    <span id="hud-book"   class="hud-chip hud-chip--book"   aria-label="학습 진도">📖 0/95</span>
+    <span id="hud-level"  class="hud-chip hud-chip--level"  aria-label="레벨">⭐ Lv.1</span>
+    <span id="hud-streak" class="hud-chip hud-chip--streak" aria-label="연속 학습" style="display:none"></span>
+  </header>
+
+  <!-- ══ 화면 ════════════════════════════════════════ -->
+  <main id="screens">
+
+    <!-- ── [1] 정원 ──────────────────────────────── -->
+    <section id="screen-garden" class="screen screen--active" aria-label="나의 정원">
+
+      <!-- 하늘 + 정원 뷰포트 -->
+      <div id="garden-viewport">
+        <!-- 구름 애니메이션 -->
+        <div class="cloud cloud-1"></div>
+        <div class="cloud cloud-2"></div>
+        <div class="cloud cloud-3"></div>
+
+        <!-- 벚꽃 떨어지는 꽃잎 -->
+        <div class="petal" style="left:10%;animation-duration:8s;animation-delay:0s;">🌸</div>
+        <div class="petal" style="left:30%;animation-duration:11s;animation-delay:2s;">🌺</div>
+        <div class="petal" style="left:55%;animation-duration:9s;animation-delay:4s;">🌸</div>
+        <div class="petal" style="left:75%;animation-duration:13s;animation-delay:1s;">🌼</div>
+        <div class="petal" style="left:90%;animation-duration:10s;animation-delay:6s;">🌸</div>
+
+        <!-- SVG 정원 (garden.js가 동적 생성) -->
+        <div id="garden-svg-container" role="img" aria-label="정원 보기"></div>
+      </div>
+
+      <!-- 정원 정보 바 -->
+      <div id="garden-info-bar">
+        <span id="garden-stage-name">🌱 황폐한 정원</span>
+        <span id="garden-learned-count">한자 0개 학습</span>
+      </div>
+
+      <!-- 배치 모드 힌트 (숨겨진 상태) -->
+      <div id="garden-placing-bar" class="hidden">
+        <span id="garden-placing-hint">배치할 위치를 선택하세요</span>
+        <button id="btn-cancel-place">✕ 취소</button>
+      </div>
+
+      <!-- 액션 버튼들 -->
+      <div id="garden-actions">
+        <button id="btn-play" class="btn btn-green btn-xl" aria-label="게임 시작">
+          🎮 PLAY
+        </button>
+        <div class="quick-actions">
+          <button id="btn-shop" class="quick-action-btn" aria-label="정원 상점">
+            <span class="qa-emoji">🏪</span>
+            <span class="qa-label">정원 상점</span>
+          </button>
+          <button class="quick-action-btn" data-nav="inventory" aria-label="내 아이템">
+            <span class="qa-emoji">🎒</span>
+            <span class="qa-label">내 아이템</span>
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── [2] 미니게임 ──────────────────────────── -->
+    <section id="screen-minigame" class="screen" aria-label="과일 연결 게임">
+
+      <div class="mg-header">
+        <h1 class="mg-title">🍎 과일 연결</h1>
+        <div class="timer-wrap">
+          <div id="minigame-timer" aria-live="polite">30</div>
+          <div class="timer-track">
+            <div id="minigame-timer-bar"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mg-hint">
+        같은 과일 3개 이상 연결하기 👆 드래그하세요!
+      </div>
+
+      <!-- 3×3 격자 -->
+      <div id="minigame-grid" role="grid" aria-label="과일 격자"></div>
+
+      <div class="mg-score">
+        🍇 연결: <strong id="minigame-score-text">0번</strong>
+      </div>
+
+    </section>
+
+    <!-- ── [3] 한자 퀴즈 ─────────────────────────── -->
+    <section id="screen-kanji-quiz" class="screen" aria-label="한자 퀴즈">
+
+      <div style="text-align:center">
+        <div id="quiz-grade-label">✨ 오늘의 한자!</div>
+        <p class="quiz-sub">이 한자의 음과 뜻은?</p>
+      </div>
+
+      <!-- 한자 표시 카드 -->
+      <div class="kanji-card-big">
+        <span id="quiz-kanji-char" lang="ja">水</span>
+      </div>
+
+      <!-- 4지선다 -->
+      <div id="quiz-options" role="group" aria-label="선택지"></div>
+
+    </section>
+
+    <!-- ── [4] 보상 ──────────────────────────────── -->
+    <section id="screen-reward" class="screen" aria-label="보상">
+      <div id="reward-content" aria-live="assertive">
+        <!-- app.js가 동적 생성 -->
+      </div>
+    </section>
+
+    <!-- ── [5] 한자 도감 ─────────────────────────── -->
+    <section id="screen-kanjibook" class="screen" aria-label="한자 도감">
+      <div class="kb-header">
+        <h2>📖 나의 한자 도감</h2>
+        <div id="kanjibook-count" class="kb-count">0 / 95</div>
+        <div class="kb-progress-track">
+          <div id="kanjibook-progress-fill" class="kb-progress-fill" style="width:0%"></div>
+        </div>
+      </div>
+      <div id="kanjibook-grid" role="list"></div>
+    </section>
+
+    <!-- ── [6] 인벤토리 ──────────────────────────── -->
+    <section id="screen-inventory" class="screen" aria-label="인벤토리">
+      <div class="inv-header">
+        <h2>🎒 내 아이템</h2>
+        <p>아이템을 탭하면 정원에 배치할 수 있어요</p>
+      </div>
+      <div id="inventory-grid" role="list">
+        <p class="empty-msg">아직 아이템이 없어요.<br>게임을 플레이해서 얻어보세요! 🎮</p>
+      </div>
+    </section>
+
+    <!-- ── [7] 상점 ──────────────────────────────── -->
+    <section id="screen-shop" class="screen" aria-label="정원 상점">
+      <div id="shop-content"><!-- garden.js renderShop() --></div>
+    </section>
+
+  </main>
+
+  <!-- ══ 내비게이션 ══════════════════════════════════ -->
+  <nav id="nav" role="navigation" aria-label="메인 메뉴">
+    <button class="nav-btn nav-btn--active" data-nav="garden" aria-label="정원">
+      <span class="ni">🏡</span><span class="nl">정원</span>
+    </button>
+    <button class="nav-btn" data-nav="kanjibook" aria-label="도감">
+      <span class="ni">📖</span><span class="nl">도감</span>
+    </button>
+    <button class="nav-btn" data-nav="inventory" aria-label="아이템">
+      <span class="ni">🎒</span><span class="nl">아이템</span>
+    </button>
+    <button class="nav-btn" data-nav="shop" aria-label="상점">
+      <span class="ni">🏪</span><span class="nl">상점</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- ══ 스크립트 ════════════════════════════════════════ -->
+<script type="module">
+  import { initApp } from './js/app.js';
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+  } else {
+    initApp();
+  }
+</script>
+
+</body>
+</html>
