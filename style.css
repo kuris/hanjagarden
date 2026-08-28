@@ -604,11 +604,48 @@ html, body {
   100% { opacity: 0; transform: translate(-50%, -100%) scale(0.8); }
 }
 
+/* 스마트 힌트 반짝임 스타일 */
+.mg-cell--hint {
+  animation: cell-hint-bounce 1.05s ease-in-out infinite alternate !important;
+  z-index: 6;
+}
+@keyframes cell-hint-bounce {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4), 0 2px 5px rgba(0,0,0,0.06);
+    border-color: rgba(251, 191, 36, 0.6);
+  }
+  50% {
+    transform: scale(1.1) translateY(-3px);
+    box-shadow: 0 0 12px 3px rgba(251, 191, 36, 0.85), 0 0 20px 6px rgba(245, 158, 11, 0.4);
+    border-color: #f59e0b;
+    background: #fffbeb !important;
+  }
+  100% {
+    transform: scale(1.05) translateY(-1px);
+    box-shadow: 0 0 8px 2px rgba(251, 191, 36, 0.6);
+    border-color: #fbbf24;
+  }
+}
+
 .mg-hint {
   font-size: 13px; font-weight: 600; color: var(--text-500);
   text-align: center;
   padding: 8px 16px; background: rgba(255,255,255,0.6);
   border-radius: var(--r-full); border: 1px solid rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+.mg-hint--glow {
+  background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+  color: #92400e !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.45);
+  animation: hint-bar-pulse 1s ease-in-out infinite alternate;
+  font-weight: 800;
+}
+@keyframes hint-bar-pulse {
+  0%   { transform: scale(1); }
+  100% { transform: scale(1.03); }
 }
 
 /* ══════════════════════════════════════

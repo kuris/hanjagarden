@@ -17,9 +17,14 @@ let dragStartPos = null;   // 드래그 시작 좌표
 let dragStartIdx = -1;     // 드래그 시작 셀 인덱스
 let timeLeft = 30;
 let timerInterval = null;
-let score = 0;             // 제거한 횟수
-let matchCount = 0;        // 매치 콤보/횟수
-let onGameEnd = null;      // 콜백
+let hintTimer = null;      // 10초 이상 멈춰있을 때 힌트를 띄우는 타이머
+let hintsUsed = 0;          // 한 판당 사용된 힌트 횟수 (최대 2회)
+const MAX_HINTS_PER_GAME = 2;
+const HINT_IDLE_TIME = 10000; // 10초
+let activeHintIndices = []; // 현재 반짝이는 힌트 타일 인덱스
+let score = 0;              // 제거한 횟수
+let matchCount = 0;         // 매치 콤보/횟수
+let onGameEnd = null;       // 콜백
 
 // ─── 공개 API ───────────────────────────────────────────────
 
@@ -32,6 +37,9 @@ export function initMiniGame(container, endCallback) {
   isProcessing = false;
   dragStartPos = null;
   dragStartIdx = -1;
+  hintsUsed = 0;
+  activeHintIndices = [];
+  if (hintTimer) clearTimeout(hintTimer);
 
   // 매 판 6가지 과일 중 4~5가지 무작위 선택
   const shuffled = [...ALL_FRUITS].sort(() => Math.random() - 0.5);
@@ -40,6 +48,7 @@ export function initMiniGame(container, endCallback) {
   grid = createInitialBoard();
   render(container);
   startTimer(container);
+  scheduleHint();
 
   const scoreEl = container.querySelector('#minigame-score-text');
   if (scoreEl) scoreEl.textContent = '0점';
@@ -49,6 +58,8 @@ export function initMiniGame(container, endCallback) {
 
 export function destroyMiniGame() {
   if (timerInterval) clearInterval(timerInterval);
+  if (hintTimer) clearTimeout(hintTimer);
+  clearHintVisuals();
   isProcessing = false;
   selectedIdx = -1;
 }
@@ -81,6 +92,24 @@ function createInitialBoard() {
 
 // 가능한 스왑 이동이 있는지 검사
 function hasPossibleMoves(board) {
+  return findHintMove(board) !== null;
+}
+
+// 힌트로 보여줄 유효한 스왑 쌍 찾기
+function findHintMove(board) {
+  // 1) 보드에 폭탄(💣)이나 슈퍼스타(🌟)가 있으면 해당 아이템과 인접 타일을 힌트로 우선 제시
+  for (let idx = 0; idx < TOTAL_CELLS; idx++) {
+    if (board[idx] === ITEM_BOMB || board[idx] === ITEM_SUPER) {
+      const r = Math.floor(idx / GRID_SIZE);
+      const c = idx % GRID_SIZE;
+      if (c + 1 < GRID_SIZE && board[idx + 1]) return [idx, idx + 1];
+      if (r + 1 < GRID_SIZE && board[idx + GRID_SIZE]) return [idx, idx + GRID_SIZE];
+      if (c - 1 >= 0 && board[idx - 1]) return [idx, idx - 1];
+      if (r - 1 >= 0 && board[idx - GRID_SIZE]) return [idx, idx - GRID_SIZE];
+    }
+  }
+
+  // 2) 가로/세로 스왑 매칭 탐색
   for (let r = 0; r < GRID_SIZE; r++) {
     for (let c = 0; c < GRID_SIZE; c++) {
       const idx = r * GRID_SIZE + c;
@@ -90,7 +119,7 @@ function hasPossibleMoves(board) {
         swapBoard(board, idx, rightIdx);
         const matches = findMatches(board);
         swapBoard(board, idx, rightIdx);
-        if (matches.length > 0) return true;
+        if (matches.length > 0) return [idx, rightIdx];
       }
       // 아래쪽 스왑 테스트
       if (r + 1 < GRID_SIZE) {
@@ -98,17 +127,70 @@ function hasPossibleMoves(board) {
         swapBoard(board, idx, downIdx);
         const matches = findMatches(board);
         swapBoard(board, idx, downIdx);
-        if (matches.length > 0) return true;
+        if (matches.length > 0) return [idx, downIdx];
       }
     }
   }
-  return false;
+  return null;
 }
 
 function swapBoard(board, a, b) {
   const temp = board[a];
   board[a] = board[b];
   board[b] = temp;
+}
+
+// ─── 힌트 스케줄러 & 시각 효과 ────────────────────────────────
+
+export function scheduleHint() {
+  if (hintTimer) clearTimeout(hintTimer);
+  clearHintVisuals();
+
+  // 한 판에 2회까지만 힌트 제공
+  if (hintsUsed >= MAX_HINTS_PER_GAME) return;
+
+  // 사용자가 10초 이상 멈춰있으면 살짝 반짝거리며 힌트 제시!
+  hintTimer = setTimeout(() => {
+    if (isProcessing) return;
+    if (hintsUsed >= MAX_HINTS_PER_GAME) return;
+
+    const move = findHintMove(grid);
+    if (move) {
+      hintsUsed++;
+      showHintVisuals(move);
+    }
+  }, HINT_IDLE_TIME);
+}
+
+function showHintVisuals(indices) {
+  activeHintIndices = indices;
+  const gameEl = document.getElementById('minigame-grid');
+  if (!gameEl) return;
+
+  indices.forEach(idx => {
+    const cell = gameEl.children[idx];
+    if (cell) {
+      cell.classList.add('mg-cell--hint');
+    }
+  });
+
+  const hintBar = document.querySelector('.mg-hint');
+  if (hintBar) {
+    hintBar.classList.add('mg-hint--glow');
+  }
+}
+
+function clearHintVisuals() {
+  activeHintIndices = [];
+  const gameEl = document.getElementById('minigame-grid');
+  if (gameEl) {
+    const cells = gameEl.querySelectorAll('.mg-cell--hint');
+    cells.forEach(c => c.classList.remove('mg-cell--hint'));
+  }
+  const hintBar = document.querySelector('.mg-hint');
+  if (hintBar) {
+    hintBar.classList.remove('mg-hint--glow');
+  }
 }
 
 // ─── 렌더링 ──────────────────────────────────────────────────
@@ -183,6 +265,10 @@ function onPointerDown(e, gameEl) {
   if (isProcessing) return;
   const idx = getCellAtPoint(gameEl, e.clientX, e.clientY);
   if (idx < 0 || !grid[idx]) return;
+
+  // 사용자 인터랙션 시 힌트 해제 및 타이머 리셋
+  clearHintVisuals();
+  scheduleHint();
 
   dragStartPos = { x: e.clientX, y: e.clientY };
   dragStartIdx = idx;
@@ -297,6 +383,7 @@ async function handleSwap(idxA, idxB, gameEl) {
     swapBoard(grid, idxA, idxB);
     refreshAllCells();
     isProcessing = false;
+    scheduleHint();
     return;
   }
 
@@ -519,6 +606,7 @@ async function processBoardMatches(lastSwapA, lastSwapB, gameEl, isSpecialSwap =
   }
 
   checkWin();
+  scheduleHint();
 }
 
 // ─── 특수 아이템 스왑 처리 ───────────────────────────────────
